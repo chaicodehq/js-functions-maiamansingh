@@ -40,13 +40,100 @@
  *   // => { totalCustomers: 3, totalRevenue: 7200, mealBreakdown: { veg: 2, nonveg: 1 } }
  */
 export function createTiffinPlan({ name, mealType = "veg", days = 30 } = {}) {
-  // Your code here
+  const prices = {
+    veg: 80,
+    nonveg: 120,
+    jain: 90,
+  };
+
+  if (typeof name !== "string" || name.trim() === "") {
+    return null;
+  }
+
+  if (!(mealType in prices)) {
+    return null;
+  }
+
+  const d = Number(days);
+  if (!Number.isFinite(d) || d <= 0) {
+    return null;
+  }
+
+  const dailyRate = prices[mealType];
+  const totalCost = dailyRate * d;
+
+  return {
+    name,
+    mealType,
+    days: d,
+    dailyRate,
+    totalCost,
+  };
 }
 
 export function combinePlans(...plans) {
-  // Your code here
+  if (!plans.length) {
+    return null;
+  }
+
+  const validPlans = plans.filter(
+    (p) =>
+      p &&
+      typeof p === "object" &&
+      typeof p.name === "string" &&
+      typeof p.mealType === "string"
+  );
+
+  const totalCustomers = validPlans.length;
+  let totalRevenue = 0;
+  const mealBreakdown = {};
+
+  for (const plan of validPlans) {
+    const cost = Number(plan.totalCost);
+    if (Number.isFinite(cost)) {
+      totalRevenue += cost;
+    }
+    const type = plan.mealType;
+    mealBreakdown[type] = (mealBreakdown[type] || 0) + 1;
+  }
+
+  return {
+    totalCustomers,
+    totalRevenue,
+    mealBreakdown,
+  };
 }
 
 export function applyAddons(plan, ...addons) {
-  // Your code here
+  if (!plan || typeof plan !== "object") {
+    return null;
+  }
+
+  const addonNames = [];
+  let extraPerDay = 0;
+
+  for (const addon of addons) {
+    if (
+      addon &&
+      typeof addon.name === "string" &&
+      typeof addon.price === "number"
+    ) {
+      addonNames.push(addon.name);
+      extraPerDay += addon.price;
+    }
+  }
+
+  const days = Number(plan.days);
+  const baseDailyRate = Number(plan.dailyRate);
+  const newDailyRate =
+    (Number.isFinite(baseDailyRate) ? baseDailyRate : 0) + extraPerDay;
+  const totalCost =
+    Number.isFinite(days) && days > 0 ? newDailyRate * days : newDailyRate;
+
+  return {
+    ...plan,
+    dailyRate: newDailyRate,
+    totalCost,
+    addonNames,
+  };
 }
